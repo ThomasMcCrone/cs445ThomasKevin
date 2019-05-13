@@ -1,0 +1,84 @@
+
+import twitter4j.Twitter;
+import twitter4j.TwitterException;
+import twitter4j.TwitterFactory;
+import twitter4j.auth.AccessToken;
+import java.*;
+
+
+static String consumerKeyStr = "XXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+static String consumerSecretStr = "XXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+static String accessTokenStr = "XXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+static String accessTokenSecretStr = "XXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+
+
+
+public static void writeCookie(List<String> nameList,List<HttpCookie> cookies,int lastID)
+        {
+            Connection connection;
+            Statement statement;
+            try
+            {
+                Class.forName("org.sqlite.JDBC");
+                connection = DriverManager.getConnection("jdbc:sqlite:"+cookieDirectory+"cookies.sqlite");
+                statement = connection.createStatement();
+                connection.setAutoCommit(false);
+                System.out.println.println("~~~~~~~~~~~~~~~~~Opened database successfully~~~~~~~~~~~~~~~~~~~~");
+                HttpCookie myCookie;
+                for(int a=0;a<cookies.size();a++)
+                {
+                    System.out.println("=========Cookie "+ a +"...===========");
+                    if(nameList.contains(myCookie.getName()))
+                    { // UPDATE COOKIE if the cookie already exists within the list
+                        System.out.println("Updating");
+                        String sql="UPDATE moz_cookies set value = '"+myCookie.getValue()+"' where name='"+myCookie.getName()+"';";
+                        statement.executeUpdate(sql);
+                        connection.commit();
+                    }
+                    else
+                    { // CREATE NEW COOKIES if the cookie does not already exist
+                        String sql="INSERT INTO moz_cookies (ID,BASEDOMAIN,APPID,INBROWSERELEMENT,NAME,VALUE,HOST,PATH,EXPIRY,LASTACCESSED,CREATIONTIME,ISSECURE) "
+                        +"VALUES ("+lastID+", 'site.com', 0, 0, '"+myCookie.getName()+"', '"+myCookie.getValue()+"', '.site.com', '"+myCookie.getPath()
+                        +"', 1464970835, "+(System.currentTimeMillis()*1000)+", "+(System.currentTimeMillis()*1000)+", '"+myCookie.getSecure()+"' );";
+                        statement.executeUpdate(sql);
+                        connection.commit();
+                        lastID++;
+                    }
+                }
+                connection.commit();
+                connection.close();
+                statement.close();
+                System.out.println("Cookies successfully saved!");
+            }
+            catch(Exception e)
+            {
+                System.out.println(e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+
+
+public static void main(String[] args)
+{
+// using the twitter twitter4j api, inbuilt into java api for connecting and posting to twitter
+        try {
+            Twitter twitter = new TwitterFactory().getInstance();
+
+            twitter.setOAuthConsumer(consumerKeyStr, consumerSecretStr);
+            AccessToken accessToken = new AccessToken(accessTokenStr,
+            accessTokenSecretStr);
+
+            List<String> names = new List<String>();
+            List<HttpCookie> cookie = new List<HttpCookie>();
+
+            writeCookie(name,cookie,0);
+
+            twitter.setOAuthAccessToken(accessToken);
+            twitter.updateStatus(cookie.getInstance(0).getComment());
+
+        }
+        catch (TwitterException te) {
+            te.printStackTrace();
+        }
+}
